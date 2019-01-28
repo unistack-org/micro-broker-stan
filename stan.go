@@ -179,7 +179,7 @@ func (n *stanBroker) Subscribe(topic string, handler broker.Handler, opts ...bro
 	if n.conn == nil {
 		return nil, errors.New("not connected")
 	}
-	var successAutoAck bool
+	var ackSuccess bool
 
 	opt := broker.SubscribeOptions{
 		AutoAck: true,
@@ -208,9 +208,9 @@ func (n *stanBroker) Subscribe(topic string, handler broker.Handler, opts ...bro
 		stanOpts = append(stanOpts, subOpts...)
 	}
 
-	if bval, ok := ctx.Value(successAutoAckKey{}).(bool); ok && bval {
+	if bval, ok := ctx.Value(ackSuccessKey{}).(bool); ok && bval {
 		stanOpts = append(stanOpts, stan.SetManualAckMode())
-		successAutoAck = true
+		ackSuccess = true
 	}
 
 	bopts := stan.DefaultSubscriptionOptions
@@ -233,7 +233,7 @@ func (n *stanBroker) Subscribe(topic string, handler broker.Handler, opts ...bro
 		// execute the handler
 		err := handler(&publication{m: &m, msg: msg, t: msg.Subject})
 		// if there's no error and success auto ack is enabled ack it
-		if err == nil && successAutoAck {
+		if err == nil && ackSuccess {
 			msg.Ack()
 		}
 	}

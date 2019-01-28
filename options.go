@@ -34,9 +34,9 @@ func SubscribeContext(ctx context.Context) broker.SubscribeOption {
 	return setSubscribeOption(subscribeContextKey{}, ctx)
 }
 
-type successAutoAckKey struct{}
+type ackSuccessKey struct{}
 
-// SuccessAutoAck allow to AutoAck messages when handler returns without error
-func SuccessAutoAck() broker.SubscribeOption {
-	return setSubscribeOption(successAutoAckKey{}, true)
+// AckOnSuccess allow to AutoAck messages when handler returns without error
+func AckOnSuccess() broker.SubscribeOption {
+	return setSubscribeOption(ackSuccessKey{}, true)
 }
