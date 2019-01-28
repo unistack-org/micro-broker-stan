@@ -224,14 +224,16 @@ func (n *stanBroker) Subscribe(topic string, handler broker.Handler, opts ...bro
 
 	fn := func(msg *stan.Msg) {
 		var m broker.Message
-		var err error
-		if err = n.opts.Codec.Unmarshal(msg.Data, &m); err != nil {
+
+		// unmarshal message
+		if err := n.opts.Codec.Unmarshal(msg.Data, &m); err != nil {
 			return
 		}
-		err = handler(&publication{m: &m, msg: msg, t: msg.Subject})
-		if err == nil && successAutoAck && !opt.AutoAck {
-			msg.Ack()
-		} else if err != nil && opt.AutoAck {
+
+		// execute the handler
+		err := handler(&publication{m: &m, msg: msg, t: msg.Subject})
+		// if there's no error and success auto ack is enabled ack it
+		if err == nil && successAutoAck {
 			msg.Ack()
 		}
 	}
