@@ -2,6 +2,7 @@ package stan
 
 import (
 	"context"
+	"time"
 
 	"github.com/micro/go-micro/broker"
 	stan "github.com/nats-io/go-nats-streaming"
@@ -39,4 +40,18 @@ type ackSuccessKey struct{}
 // AckOnSuccess will automatically acknowledge messages when no error is returned
 func AckOnSuccess() broker.SubscribeOption {
 	return setSubscribeOption(ackSuccessKey{}, true)
+}
+
+type timeoutKey struct{}
+
+// Timeout for connecting to broker -1 infinitive or time.Duration value
+func Timeout(td time.Duration) broker.Option {
+	return setBrokerOption(timeoutKey{}, td)
+}
+
+type reconnectKey struct{}
+
+// Reconnect to broker in case of errors
+func Reconnect(v bool) broker.Option {
+	return setBrokerOption(reconnectKey{}, v)
 }
