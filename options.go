@@ -42,16 +42,16 @@ func AckOnSuccess() broker.SubscribeOption {
 	return setSubscribeOption(ackSuccessKey{}, true)
 }
 
-type timeoutKey struct{}
+type connectTimeoutKey struct{}
 
-// Timeout for connecting to broker -1 infinitive or time.Duration value
-func Timeout(td time.Duration) broker.Option {
-	return setBrokerOption(timeoutKey{}, td)
+// ConnectTimeout timeout for connecting to broker -1 infinitive or time.Duration value
+func ConnectTimeout(td time.Duration) broker.Option {
+	return setBrokerOption(connectTimeoutKey{}, td)
 }
 
-type reconnectKey struct{}
+type connectRetryKey struct{}
 
-// Reconnect to broker in case of errors
-func Reconnect(v bool) broker.Option {
-	return setBrokerOption(reconnectKey{}, v)
+// ConnectRetry reconnect to broker in case of errors
+func ConnectRetry(v bool) broker.Option {
+	return setBrokerOption(connectRetryKey{}, v)
 }
