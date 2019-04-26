@@ -25,6 +25,7 @@ type stanBroker struct {
 	sopts          stan.Options
 	nopts          []stan.Option
 	clusterID      string
+	clientID       string
 	connectTimeout time.Duration
 	connectRetry   bool
 	done           chan struct{}
@@ -136,8 +137,7 @@ func (n *stanBroker) connect() error {
 	defer ticker.Stop()
 
 	fn := func() error {
-		clientID := uuid.New().String()
-		c, err := stan.Connect(n.clusterID, clientID, n.nopts...)
+		c, err := stan.Connect(n.clusterID, n.clientID, n.nopts...)
 		if err == nil {
 			n.Lock()
 			n.conn = c
@@ -190,6 +190,11 @@ func (n *stanBroker) Connect() error {
 		return errors.New("must specify ClusterID Option")
 	}
 
+	clientID, ok := n.opts.Context.Value(clientIDKey{}).(string)
+	if !ok || len(clientID) == 0 {
+		clientID = uuid.New().String()
+	}
+
 	if v, ok := n.opts.Context.Value(connectRetryKey{}).(bool); ok && v {
 		n.connectRetry = true
 	}
@@ -220,6 +225,7 @@ func (n *stanBroker) Connect() error {
 	n.Lock()
 	n.nopts = nopts
 	n.clusterID = clusterID
+	n.clientID = clientID
 	n.Unlock()
 
 	return n.connect()
