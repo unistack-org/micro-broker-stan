@@ -22,6 +22,13 @@ func ClusterID(clusterID string) broker.Option {
 	return setBrokerOption(clusterIDKey{}, clusterID)
 }
 
+type clientIDKey struct{}
+
+// ClientID specify client id to connect
+func ClientID(clientID string) broker.Option {
+	return setBrokerOption(clientIDKey{}, clientID)
+}
+
 type subscribeOptionKey struct{}
 
 func SubscribeOption(opts ...stan.SubscriptionOption) broker.SubscribeOption {
