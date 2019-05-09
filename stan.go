@@ -151,6 +151,10 @@ func (n *stanBroker) connect() error {
 		return nil
 	}
 
+	n.RLock()
+	done := n.done
+	n.RUnlock()
+
 	// wait loop
 	for {
 		select {
@@ -158,7 +162,7 @@ func (n *stanBroker) connect() error {
 		case <-n.opts.Context.Done():
 			return nil
 		// call close, don't wait anymore
-		case <-n.done:
+		case <-done:
 			return nil
 		//  in case of timeout fail with a timeout error
 		case <-timeout:
