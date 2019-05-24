@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/micro/go-micro/broker"
+	"github.com/micro/go-micro/server"
 	stan "github.com/nats-io/go-nats-streaming"
 )
 
@@ -33,6 +34,10 @@ type subscribeOptionKey struct{}
 
 func SubscribeOption(opts ...stan.SubscriptionOption) broker.SubscribeOption {
 	return setSubscribeOption(subscribeOptionKey{}, opts)
+}
+
+func ServerSubscriberOption(opts ...stan.SubscriptionOption) server.SubscriberOption {
+	return setServerSubscriberOption(subscribeOptionKey{}, opts)
 }
 
 type subscribeContextKey struct{}
