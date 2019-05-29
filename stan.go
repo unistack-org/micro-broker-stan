@@ -320,6 +320,11 @@ func (n *stanBroker) Subscribe(topic string, handler broker.Handler, opts ...bro
 
 	opt.AutoAck = !bopts.ManualAcks
 
+	if dn, ok := n.opts.Context.Value(durableKey{}).(string); ok && len(dn) > 0 {
+		stanOpts = append(stanOpts, stan.DurableName(dn))
+		bopts.DurableName = dn
+	}
+
 	fn := func(msg *stan.Msg) {
 		var m broker.Message
 
@@ -367,7 +372,7 @@ func NewBroker(opts ...broker.Option) broker.Broker {
 		o(&options)
 	}
 
-	stanOpts := stan.DefaultOptions
+	stanOpts := stan.GetDefaultOptions()
 	if n, ok := options.Context.Value(optionsKey{}).(stan.Options); ok {
 		stanOpts = n
 	}

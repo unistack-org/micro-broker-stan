@@ -67,3 +67,10 @@ type connectRetryKey struct{}
 func ConnectRetry(v bool) broker.Option {
 	return setBrokerOption(connectRetryKey{}, v)
 }
+
+type durableKey struct{}
+
+// DurableName sets the DurableName for the subscriber
+func DurableName(name string) broker.Option {
+	return setBrokerOption(durableKey{}, name)
+}
