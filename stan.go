@@ -14,7 +14,7 @@ import (
 	"github.com/micro/go-micro/broker"
 	"github.com/micro/go-micro/cmd"
 	"github.com/micro/go-micro/codec/json"
-	stan "github.com/nats-io/go-nats-streaming"
+	stan "github.com/nats-io/stan.go"
 )
 
 type stanBroker struct {
@@ -221,7 +221,7 @@ func (n *stanBroker) Connect() error {
 		stan.ConnectWait(n.sopts.ConnectTimeout),
 		stan.PubAckWait(n.sopts.AckTimeout),
 		stan.MaxPubAcksInflight(n.sopts.MaxPubAcksInflight),
-		stan.Pings(n.sopts.PingIterval, n.sopts.PingMaxOut),
+		stan.Pings(n.sopts.PingInterval, n.sopts.PingMaxOut),
 		stan.SetConnectionLostHandler(n.sopts.ConnectionLostCB),
 	}
 	nopts = append(nopts, stan.NatsURL(strings.Join(n.addrs, ",")))

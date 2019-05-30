@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/micro/go-micro/broker"
-	stan "github.com/nats-io/go-nats-streaming"
+	stan "github.com/nats-io/stan.go"
 )
 
 var addrTestCases = []struct {

@@ -6,7 +6,7 @@ import (
 
 	"github.com/micro/go-micro/broker"
 	"github.com/micro/go-micro/server"
-	stan "github.com/nats-io/go-nats-streaming"
+	stan "github.com/nats-io/stan.go"
 )
 
 type optionsKey struct{}
