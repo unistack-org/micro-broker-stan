@@ -10,10 +10,10 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	log "github.com/micro/go-micro/util/log"
 	"github.com/micro/go-micro/broker"
 	"github.com/micro/go-micro/cmd"
 	"github.com/micro/go-micro/codec/json"
+	log "github.com/micro/go-micro/util/log"
 	stan "github.com/nats-io/stan.go"
 )
 
