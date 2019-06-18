@@ -129,15 +129,20 @@ func (n *stanBroker) reconnectCB(c stan.Conn, err error) {
 func (n *stanBroker) connect() error {
 	timeout := make(<-chan time.Time)
 
+	n.RLock()
 	if n.connectTimeout > 0 {
 		timeout = time.After(n.connectTimeout)
 	}
+	clusterID := n.clusterID
+	clientID := n.clientID
+	nopts := n.nopts
+	n.RUnlock()
 
 	ticker := time.NewTicker(1 * time.Second)
 	defer ticker.Stop()
 
 	fn := func() error {
-		c, err := stan.Connect(n.clusterID, n.clientID, n.nopts...)
+		c, err := stan.Connect(clusterID, clientID, nopts...)
 		if err == nil {
 			n.Lock()
 			n.conn = c
@@ -199,6 +204,7 @@ func (n *stanBroker) Connect() error {
 		clientID = uuid.New().String()
 	}
 
+	n.Lock()
 	if v, ok := n.opts.Context.Value(connectRetryKey{}).(bool); ok && v {
 		n.connectRetry = true
 	}
@@ -208,6 +214,7 @@ func (n *stanBroker) Connect() error {
 	}
 
 	if n.sopts.ConnectionLostCB != nil && n.connectRetry {
+		n.Unlock()
 		return errors.New("impossible to use custom ConnectionLostCB and ConnectRetry(true)")
 	}
 
@@ -226,7 +233,6 @@ func (n *stanBroker) Connect() error {
 	}
 	nopts = append(nopts, stan.NatsURL(strings.Join(n.addrs, ",")))
 
-	n.Lock()
 	n.nopts = nopts
 	n.clusterID = clusterID
 	n.clientID = clientID
