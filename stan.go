@@ -218,10 +218,6 @@ func (n *stanBroker) Connect() error {
 		return errors.New("impossible to use custom ConnectionLostCB and ConnectRetry(true)")
 	}
 
-	if n.connectRetry {
-		n.sopts.ConnectionLostCB = n.reconnectCB
-	}
-
 	nopts := []stan.Option{
 		stan.NatsURL(n.sopts.NatsURL),
 		stan.NatsConn(n.sopts.NatsConn),
@@ -229,8 +225,12 @@ func (n *stanBroker) Connect() error {
 		stan.PubAckWait(n.sopts.AckTimeout),
 		stan.MaxPubAcksInflight(n.sopts.MaxPubAcksInflight),
 		stan.Pings(n.sopts.PingInterval, n.sopts.PingMaxOut),
-		stan.SetConnectionLostHandler(n.sopts.ConnectionLostCB),
 	}
+
+	if n.connectRetry {
+		nopts = append(nopts, stan.SetConnectionLostHandler(n.reconnectCB))
+	}
+
 	nopts = append(nopts, stan.NatsURL(strings.Join(n.addrs, ",")))
 
 	n.nopts = nopts
