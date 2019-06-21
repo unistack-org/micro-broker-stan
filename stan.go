@@ -280,9 +280,13 @@ func (n *stanBroker) Publish(topic string, msg *broker.Message, opts ...broker.P
 }
 
 func (n *stanBroker) Subscribe(topic string, handler broker.Handler, opts ...broker.SubscribeOption) (broker.Subscriber, error) {
+	n.RLock()
 	if n.conn == nil {
+		n.RUnlock()
 		return nil, errors.New("not connected")
 	}
+	n.RUnlock()
+
 	var ackSuccess bool
 
 	opt := broker.SubscribeOptions{
