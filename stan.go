@@ -11,8 +11,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/micro/go-micro/broker"
-	"github.com/micro/go-micro/config/cmd"
 	"github.com/micro/go-micro/codec/json"
+	"github.com/micro/go-micro/config/cmd"
 	log "github.com/micro/go-micro/util/log"
 	stan "github.com/nats-io/stan.go"
 )
