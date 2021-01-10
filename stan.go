@@ -10,11 +10,9 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/micro/go-micro/v2/broker"
-	"github.com/micro/go-micro/v2/codec/json"
-	"github.com/micro/go-micro/v2/cmd"
-	log "github.com/micro/go-micro/v2/logger"
 	stan "github.com/nats-io/stan.go"
+	"github.com/unistack-org/micro/v3/broker"
+	"github.com/unistack-org/micro/v3/logger"
 )
 
 type stanBroker struct {
@@ -46,10 +44,6 @@ type publication struct {
 	err error
 }
 
-func init() {
-	cmd.DefaultBrokers["stan"] = NewBroker
-}
-
 func (n *publication) Topic() string {
 	return n.t
 }
@@ -74,7 +68,7 @@ func (n *subscriber) Topic() string {
 	return n.t
 }
 
-func (n *subscriber) Unsubscribe() error {
+func (n *subscriber) Unsubscribe(ctx context.Context) error {
 	if n.s == nil {
 		return nil
 	}
@@ -125,13 +119,15 @@ func setAddrs(addrs []string) []string {
 
 func (n *stanBroker) reconnectCB(c stan.Conn, err error) {
 	if n.connectRetry {
-		if err := n.connect(); err != nil {
-			log.Error(err)
+		if err := n.connect(n.opts.Context); err != nil {
+			if n.opts.Logger.V(logger.ErrorLevel) {
+				n.opts.Logger.Errorf("broker [stan] reconnect err: %v", err)
+			}
 		}
 	}
 }
 
-func (n *stanBroker) connect() error {
+func (n *stanBroker) connect(ctx context.Context) error {
 	timeout := make(<-chan time.Time)
 
 	n.RLock()
@@ -180,18 +176,22 @@ func (n *stanBroker) connect() error {
 		// got a tick, try to connect
 		case <-ticker.C:
 			err := fn()
-			if err == nil {
-				log.Infof("[stan]: successeful connected to %v", n.addrs)
+			if err == nil && n.opts.Logger.V(logger.InfoLevel) {
+				{
+					n.opts.Logger.Infof("[stan]: successeful connected to %v", n.addrs)
+				}
 				return nil
 			}
-			log.Errorf("[stan]: failed to connect %v: %v\n", n.addrs, err)
+			if n.opts.Logger.V(logger.ErrorLevel) {
+				n.opts.Logger.Errorf("[stan]: failed to connect %v: %v", n.addrs, err)
+			}
 		}
 	}
 
 	return nil
 }
 
-func (n *stanBroker) Connect() error {
+func (n *stanBroker) Connect(ctx context.Context) error {
 	n.RLock()
 	if n.conn != nil {
 		n.RUnlock()
@@ -243,10 +243,10 @@ func (n *stanBroker) Connect() error {
 	n.clientID = clientID
 	n.Unlock()
 
-	return n.connect()
+	return n.connect(ctx)
 }
 
-func (n *stanBroker) Disconnect() error {
+func (n *stanBroker) Disconnect(ctx context.Context) error {
 	var err error
 
 	n.Lock()
@@ -274,7 +274,7 @@ func (n *stanBroker) Options() broker.Options {
 	return n.opts
 }
 
-func (n *stanBroker) Publish(topic string, msg *broker.Message, opts ...broker.PublishOption) error {
+func (n *stanBroker) Publish(ctx context.Context, topic string, msg *broker.Message, opts ...broker.PublishOption) error {
 	b, err := n.opts.Codec.Marshal(msg)
 	if err != nil {
 		return err
@@ -284,7 +284,7 @@ func (n *stanBroker) Publish(topic string, msg *broker.Message, opts ...broker.P
 	return n.conn.Publish(topic, b)
 }
 
-func (n *stanBroker) Subscribe(topic string, handler broker.Handler, opts ...broker.SubscribeOption) (broker.Subscriber, error) {
+func (n *stanBroker) Subscribe(ctx context.Context, topic string, handler broker.Handler, opts ...broker.SubscribeOption) (broker.Subscriber, error) {
 	n.RLock()
 	if n.conn == nil {
 		n.RUnlock()
@@ -292,38 +292,19 @@ func (n *stanBroker) Subscribe(topic string, handler broker.Handler, opts ...bro
 	}
 	n.RUnlock()
 
-	var ackSuccess bool
+	options := broker.NewSubscribeOptions(opts...)
 
-	opt := broker.SubscribeOptions{
-		AutoAck: true,
-	}
-
-	for _, o := range opts {
-		o(&opt)
-	}
-
-	// Make sure context is setup
-	if opt.Context == nil {
-		opt.Context = context.Background()
-	}
-
-	ctx := opt.Context
-	if subscribeContext, ok := ctx.Value(subscribeContextKey{}).(context.Context); ok && subscribeContext != nil {
+	if subscribeContext, ok := options.Context.Value(subscribeContextKey{}).(context.Context); ok && subscribeContext != nil {
 		ctx = subscribeContext
 	}
 
 	var stanOpts []stan.SubscriptionOption
-	if !opt.AutoAck {
+	if options.AutoAck {
 		stanOpts = append(stanOpts, stan.SetManualAckMode())
 	}
 
-	if subOpts, ok := ctx.Value(subscribeOptionKey{}).([]stan.SubscriptionOption); ok && len(subOpts) > 0 {
+	if subOpts, ok := options.Context.Value(subscribeOptionKey{}).([]stan.SubscriptionOption); ok && len(subOpts) > 0 {
 		stanOpts = append(stanOpts, subOpts...)
-	}
-
-	if bval, ok := ctx.Value(ackSuccessKey{}).(bool); ok && bval {
-		stanOpts = append(stanOpts, stan.SetManualAckMode())
-		ackSuccess = true
 	}
 
 	bopts := stan.DefaultSubscriptionOptions
@@ -333,7 +314,7 @@ func (n *stanBroker) Subscribe(topic string, handler broker.Handler, opts ...bro
 		}
 	}
 
-	opt.AutoAck = !bopts.ManualAcks
+	options.AutoAck = !bopts.ManualAcks
 
 	if dn, ok := n.opts.Context.Value(durableKey{}).(string); ok && len(dn) > 0 {
 		stanOpts = append(stanOpts, stan.DurableName(dn))
@@ -341,20 +322,32 @@ func (n *stanBroker) Subscribe(topic string, handler broker.Handler, opts ...bro
 	}
 
 	fn := func(msg *stan.Msg) {
-		var m broker.Message
-		p := &publication{m: &m, msg: msg, t: msg.Subject}
+		eh := n.opts.ErrorHandler
 
-		// unmarshal message
-		if err := n.opts.Codec.Unmarshal(msg.Data, &m); err != nil {
-			p.err = err
+		if options.ErrorHandler != nil {
+			eh = options.ErrorHandler
+		}
+
+		p := &publication{m: &broker.Message{}, msg: msg, t: msg.Subject}
+		if options.BodyOnly {
 			p.m.Body = msg.Data
-			return
+		} else {
+			// unmarshal message
+			if err := n.opts.Codec.Unmarshal(msg.Data, p.m); err != nil {
+				p.err = err
+				p.m.Body = msg.Data
+				eh(p)
+				return
+			}
 		}
 		// execute the handler
 		p.err = handler(p)
 		// if there's no error and success auto ack is enabled ack it
-		if p.err == nil && ackSuccess {
+		if p.err == nil && options.AutoAck {
 			msg.Ack()
+		}
+		if p.err != nil {
+			eh(p)
 		}
 	}
 
@@ -362,8 +355,8 @@ func (n *stanBroker) Subscribe(topic string, handler broker.Handler, opts ...bro
 	var err error
 
 	n.RLock()
-	if len(opt.Queue) > 0 {
-		sub, err = n.conn.QueueSubscribe(topic, opt.Queue, fn, stanOpts...)
+	if len(options.Group) > 0 {
+		sub, err = n.conn.QueueSubscribe(topic, options.Group, fn, stanOpts...)
 	} else {
 		sub, err = n.conn.Subscribe(topic, fn, stanOpts...)
 	}
@@ -371,7 +364,7 @@ func (n *stanBroker) Subscribe(topic string, handler broker.Handler, opts ...bro
 	if err != nil {
 		return nil, err
 	}
-	return &subscriber{dq: len(bopts.DurableName) > 0, s: sub, opts: opt, t: topic}, nil
+	return &subscriber{dq: len(bopts.DurableName) > 0, s: sub, opts: options, t: topic}, nil
 }
 
 func (n *stanBroker) String() string {
@@ -379,15 +372,7 @@ func (n *stanBroker) String() string {
 }
 
 func NewBroker(opts ...broker.Option) broker.Broker {
-	options := broker.Options{
-		// Default codec
-		Codec:   json.Marshaler{},
-		Context: context.Background(),
-	}
-
-	for _, o := range opts {
-		o(&options)
-	}
+	options := broker.NewOptions(opts...)
 
 	stanOpts := stan.GetDefaultOptions()
 	if n, ok := options.Context.Value(optionsKey{}).(stan.Options); ok {
