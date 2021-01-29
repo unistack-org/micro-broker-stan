@@ -1,4 +1,4 @@
-module github.com/unistack-org/micro-broker-stan
+module github.com/unistack-org/micro-broker-stan/v3
 
 go 1.13
 
