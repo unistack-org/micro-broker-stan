@@ -3,7 +3,6 @@ package stan
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 	"sync"
@@ -121,7 +120,7 @@ func (n *stanBroker) reconnectCB(c stan.Conn, err error) {
 	if n.connectRetry {
 		if err := n.connect(n.opts.Context); err != nil {
 			if n.opts.Logger.V(logger.ErrorLevel) {
-				n.opts.Logger.Errorf("broker [stan] reconnect err: %v", err)
+				n.opts.Logger.Errorf(n.opts.Context, "broker [stan] reconnect err: %v", err)
 			}
 		}
 	}
@@ -178,12 +177,12 @@ func (n *stanBroker) connect(ctx context.Context) error {
 			err := fn()
 			if err == nil && n.opts.Logger.V(logger.InfoLevel) {
 				{
-					n.opts.Logger.Infof("[stan]: successeful connected to %v", n.addrs)
+					n.opts.Logger.Infof(n.opts.Context, "[stan]: successeful connected to %v", n.addrs)
 				}
 				return nil
 			}
 			if n.opts.Logger.V(logger.ErrorLevel) {
-				n.opts.Logger.Errorf("[stan]: failed to connect %v: %v", n.addrs, err)
+				n.opts.Logger.Errorf(n.opts.Context, "[stan]: failed to connect %v: %v", n.addrs, err)
 			}
 		}
 	}
@@ -201,7 +200,7 @@ func (n *stanBroker) Connect(ctx context.Context) error {
 
 	clusterID, ok := n.opts.Context.Value(clusterIDKey{}).(string)
 	if !ok || len(clusterID) == 0 {
-		return errors.New("must specify ClusterID Option")
+		return fmt.Errorf("must specify ClusterID Option")
 	}
 
 	clientID, ok := n.opts.Context.Value(clientIDKey{}).(string)
@@ -220,7 +219,7 @@ func (n *stanBroker) Connect(ctx context.Context) error {
 
 	if n.sopts.ConnectionLostCB != nil && n.connectRetry {
 		n.Unlock()
-		return errors.New("impossible to use custom ConnectionLostCB and ConnectRetry(true)")
+		return fmt.Errorf("impossible to use custom ConnectionLostCB and ConnectRetry(true)")
 	}
 
 	nopts := []stan.Option{
@@ -288,7 +287,7 @@ func (n *stanBroker) Subscribe(ctx context.Context, topic string, handler broker
 	n.RLock()
 	if n.conn == nil {
 		n.RUnlock()
-		return nil, errors.New("not connected")
+		return nil, fmt.Errorf("not connected")
 	}
 	n.RUnlock()
 
@@ -369,6 +368,10 @@ func (n *stanBroker) Subscribe(ctx context.Context, topic string, handler broker
 
 func (n *stanBroker) String() string {
 	return "stan"
+}
+
+func (n *stanBroker) Name() string {
+	return n.opts.Name
 }
 
 func NewBroker(opts ...broker.Option) broker.Broker {
