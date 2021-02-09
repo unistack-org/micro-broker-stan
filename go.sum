@@ -140,6 +140,8 @@ github.com/stretchr/testify v1.7.0/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/
 github.com/tv42/httpunix v0.0.0-20150427012821-b75d8614f926/go.mod h1:9ESjWnEqriFuLhtthL60Sar/7RFoluCcXsuvEwTV5KM=
 github.com/unistack-org/micro/v3 v3.2.4 h1:V/QrzeSI/Bjd0j7uL8Lvvbbz8ky/0yj69srd1lE1RLI=
 github.com/unistack-org/micro/v3 v3.2.4/go.mod h1:J8XxJj4Pqa3Ee0a4biRRtut7UwTlfBq8QRe+s4PKGS0=
+github.com/unistack-org/micro/v3 v3.2.8 h1:M1qgOz+qgSf/coFeIqDKa7Xc+b3s7du1Yin+i10o3aw=
+github.com/unistack-org/micro/v3 v3.2.8/go.mod h1:J8XxJj4Pqa3Ee0a4biRRtut7UwTlfBq8QRe+s4PKGS0=
 github.com/yuin/goldmark v1.1.27/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/yuin/goldmark v1.2.1/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 go.etcd.io/bbolt v1.3.3 h1:MUGmc65QhB3pIlaQ5bB4LwqSj6GIonVJXpZiaKNyaKk=
