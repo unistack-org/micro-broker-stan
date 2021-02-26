@@ -8,7 +8,7 @@ require (
 	github.com/lib/pq v1.3.0 // indirect
 	github.com/nats-io/nats-server/v2 v2.1.6 // indirect
 	github.com/nats-io/nats-streaming-server v0.16.2 // indirect
-	github.com/nats-io/stan.go v0.8.2
+	github.com/nats-io/stan.go v0.8.3
 	github.com/prometheus/procfs v0.0.5 // indirect
 	github.com/unistack-org/micro/v3 v3.2.14
 	go.etcd.io/bbolt v1.3.4 // indirect
