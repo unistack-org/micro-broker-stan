@@ -25,6 +25,7 @@ type stanBroker struct {
 	clientID       string
 	connectTimeout time.Duration
 	connectRetry   bool
+	init           bool
 	done           chan struct{}
 	ctx            context.Context
 }
@@ -262,10 +263,29 @@ func (n *stanBroker) Disconnect(ctx context.Context) error {
 }
 
 func (n *stanBroker) Init(opts ...broker.Option) error {
+	if len(opts) == 0 && n.init {
+		return nil
+	}
+
+	if err := n.opts.Register.Init(); err != nil {
+		return err
+	}
+	if err := n.opts.Tracer.Init(); err != nil {
+		return err
+	}
+	if err := n.opts.Logger.Init(); err != nil {
+		return err
+	}
+	if err := n.opts.Meter.Init(); err != nil {
+		return err
+	}
+
 	for _, o := range opts {
 		o(&n.opts)
 	}
 	n.addrs = setAddrs(n.opts.Addrs)
+
+	n.init = true
 	return nil
 }
 
