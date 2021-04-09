@@ -10,6 +10,6 @@ require (
 	github.com/nats-io/nats-streaming-server v0.16.2 // indirect
 	github.com/nats-io/stan.go v0.8.3
 	github.com/prometheus/procfs v0.0.5 // indirect
-	github.com/unistack-org/micro/v3 v3.3.11
+	github.com/unistack-org/micro/v3 v3.3.13
 	go.etcd.io/bbolt v1.3.4 // indirect
 )
