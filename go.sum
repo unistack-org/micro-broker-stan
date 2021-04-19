@@ -188,6 +188,8 @@ github.com/unistack-org/micro/v3 v3.3.11/go.mod h1:PPCt675o3HPcODFbJ4iRWPmQFAk1W
 github.com/unistack-org/micro/v3 v3.3.13 h1:y4bDDkbwnjgOckrhFkC6D/o42tr75X33UbrB+Ko0M68=
 github.com/unistack-org/micro/v3 v3.3.13/go.mod h1:98hNcMXp/WyWJwLwCuwrhN1Jm7aCWaRNsMfRjK8Fq+Y=
 github.com/unistack-org/micro/v3 v3.3.14/go.mod h1:ETGcQQUcjxGaD44LUMX+0fgo8Loh7ExldfIPLvfUmDo=
+github.com/unistack-org/micro/v3 v3.3.15 h1:rj+spzhezCg4gmj1nuF0FRGixC51/7xFACOchB/23/E=
+github.com/unistack-org/micro/v3 v3.3.15/go.mod h1:ETGcQQUcjxGaD44LUMX+0fgo8Loh7ExldfIPLvfUmDo=
 github.com/yuin/goldmark v1.1.27/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/yuin/goldmark v1.2.1/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 go.etcd.io/bbolt v1.3.3 h1:MUGmc65QhB3pIlaQ5bB4LwqSj6GIonVJXpZiaKNyaKk=
