@@ -12,6 +12,7 @@ import (
 	stan "github.com/nats-io/stan.go"
 	"github.com/unistack-org/micro/v3/broker"
 	"github.com/unistack-org/micro/v3/logger"
+	"github.com/unistack-org/micro/v3/metadata"
 )
 
 type stanBroker struct {
@@ -58,6 +59,10 @@ func (n *publication) Ack() error {
 
 func (n *publication) Error() error {
 	return n.err
+}
+
+func (n *publication) SetError(err error) {
+	n.err = err
 }
 
 func (n *subscriber) Options() broker.SubscribeOptions {
@@ -293,6 +298,46 @@ func (n *stanBroker) Options() broker.Options {
 	return n.opts
 }
 
+func (n *stanBroker) BatchPublish(ctx context.Context, msg []*broker.Message, opts ...broker.PublishOption) error {
+	msgs := make(map[string][][]byte)
+	var wg sync.WaitGroup
+
+	wg.Add(len(msg))
+
+	for _, m := range msg {
+		b, err := n.opts.Codec.Marshal(m)
+		if err != nil {
+			return err
+		}
+		topic, _ := m.Header.Get(metadata.HeaderTopic)
+		msgs[topic] = append(msgs[topic], b)
+	}
+
+	n.RLock()
+	defer n.RUnlock()
+
+	var ackErr error
+
+	ackHandler := func(ackedNuid string, err error) {
+		wg.Done()
+		if err != nil {
+			ackErr = err
+		}
+	}
+
+	for topic, ms := range msgs {
+		for _, m := range ms {
+			if _, err := n.conn.PublishAsync(topic, m, ackHandler); err != nil {
+				return err
+			}
+		}
+	}
+
+	wg.Wait()
+
+	return ackErr
+}
+
 func (n *stanBroker) Publish(ctx context.Context, topic string, msg *broker.Message, opts ...broker.PublishOption) error {
 	b, err := n.opts.Codec.Marshal(msg)
 	if err != nil {
@@ -301,6 +346,10 @@ func (n *stanBroker) Publish(ctx context.Context, topic string, msg *broker.Mess
 	n.RLock()
 	defer n.RUnlock()
 	return n.conn.Publish(topic, b)
+}
+
+func (n *stanBroker) BatchSubscribe(ctx context.Context, topic string, handler broker.BatchHandler, opts ...broker.SubscribeOption) (broker.Subscriber, error) {
+	return nil, nil
 }
 
 func (n *stanBroker) Subscribe(ctx context.Context, topic string, handler broker.Handler, opts ...broker.SubscribeOption) (broker.Subscriber, error) {
