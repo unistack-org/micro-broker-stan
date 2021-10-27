@@ -5,8 +5,8 @@ import (
 	"time"
 
 	stan "github.com/nats-io/stan.go"
-	"github.com/unistack-org/micro/v3/broker"
-	"github.com/unistack-org/micro/v3/server"
+	"go.unistack.org/micro/v3/broker"
+	"go.unistack.org/micro/v3/server"
 )
 
 type optionsKey struct{}

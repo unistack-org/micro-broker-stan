@@ -1,5 +1,5 @@
 // Package stan provides a NATS Streaming broker
-package stan
+package stan // import "go.unistack.org/micro-broker-stan/v3"
 
 import (
 	"context"
@@ -8,11 +8,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/google/uuid"
 	stan "github.com/nats-io/stan.go"
-	"github.com/unistack-org/micro/v3/broker"
-	"github.com/unistack-org/micro/v3/logger"
-	"github.com/unistack-org/micro/v3/metadata"
+	"go.unistack.org/micro/v3/broker"
+	"go.unistack.org/micro/v3/logger"
+	"go.unistack.org/micro/v3/metadata"
+	"go.unistack.org/micro/v3/util/id"
 )
 
 type stanBroker struct {
@@ -28,7 +28,6 @@ type stanBroker struct {
 	connectRetry   bool
 	init           bool
 	done           chan struct{}
-	ctx            context.Context
 }
 
 type subscriber struct {
@@ -203,10 +202,13 @@ func (n *stanBroker) Connect(ctx context.Context) error {
 	if !ok || len(clusterID) == 0 {
 		return fmt.Errorf("must specify ClusterID Option")
 	}
-
+	var err error
 	clientID, ok := n.opts.Context.Value(clientIDKey{}).(string)
 	if !ok || len(clientID) == 0 {
-		clientID = uuid.New().String()
+		clientID, err = id.New()
+		if err != nil {
+			return err
+		}
 	}
 
 	n.Lock()
